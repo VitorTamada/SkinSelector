@@ -11,4 +11,6 @@ While having League of Legends open, run the program and click on Start to estab
 In the champion select screen, with the champion already locked in, click on "CHOOSE SKIN". The button does nothing if
 no champion is locked in. The first time may take a few more seconds.
 
+## Endorsement
+
 *SkinSelector isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.*
