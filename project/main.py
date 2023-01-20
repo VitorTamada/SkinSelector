@@ -1,4 +1,4 @@
-from project.gui.Window import GUI
+from SkinSelector.project.gui.Window import GUI
 
 
 def main():

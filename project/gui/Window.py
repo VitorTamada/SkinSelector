@@ -3,9 +3,9 @@ import urllib.error
 import numpy as np
 import tkinter as tk
 
-from project.src.GetSkin import GetSkin
-from project.src.LCUAccess import LCUAccess
-from project.utils.utils import *
+from SkinSelector.project.src.GetSkin import GetSkin
+from SkinSelector.project.src.LCUAccess import LCUAccess
+from SkinSelector.project.utils.utils import *
 
 
 def required_legal_statement():
@@ -176,12 +176,18 @@ class GUI:
         background.image = background_image
         background.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
-        tk.Button(self._root, text="Start", command=is_lol_running).place(relx=0.5,
-                                                                          rely=0.75,
-                                                                          anchor=tk.CENTER)
-        tk.Button(self._root, text="Exit", command=self._root.destroy).place(relx=0.5,
-                                                                             rely=0.9,
-                                                                             anchor=tk.CENTER)
+        tk.Button(self._root,
+                  text="Start",
+                  command=is_lol_running).place(relx=0.5,
+                                                rely=0.75,
+                                                relwidth=0.5,
+                                                anchor=tk.CENTER)
+        tk.Button(self._root,
+                  text="Exit",
+                  command=lambda: exit_confirmation(self._root)).place(relx=0.5,
+                                                                       rely=0.9,
+                                                                       relwidth=0.3,
+                                                                       anchor=tk.CENTER)
 
         self._root.geometry("{}x{}".format(os_width, os_height))
 
@@ -239,6 +245,7 @@ class GUI:
                   text="CHOOSE SKIN",
                   font=("Helvetica", 15),
                   bg='green',
+                  activebackground='dark green',
                   command=self._choose_skin).place(relheight=self._rows_height[2],
                                                    relwidth=self._columns_width[0],
                                                    rely=float(np.sum(self._rows_height[:2])))
@@ -247,9 +254,10 @@ class GUI:
                   text="EXIT",
                   font=("Helvetica", 15),
                   command=lambda: exit_confirmation(self._root),
-                  bg='red').place(relheight=self._rows_height[3],
-                                  relwidth=self._columns_width[0],
-                                  rely=float(np.sum(self._rows_height[:3])))
+                  bg='red',
+                  activebackground='dark red').place(relheight=self._rows_height[3],
+                                                     relwidth=self._columns_width[0],
+                                                     rely=float(np.sum(self._rows_height[:3])))
 
         # Chosen skin name
         self._chosen_skin_name = tk.Label(self._canvas, bg='light gray')
