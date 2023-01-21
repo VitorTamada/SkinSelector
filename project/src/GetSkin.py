@@ -1,6 +1,12 @@
 import random
 
 
+# Skins that are considered to have a chroma despite not actually having any.
+skins_chroma_exception = [
+    'K/DA ALL OUT SERAPHINE INDIE'
+]
+
+
 class GetSkin:
     def __init__(self, lcu_access):
         self._lcu_access = lcu_access
@@ -22,9 +28,13 @@ class GetSkin:
                 if not chroma['unlocked']:
                     continue
 
-                chroma['order_num'] = i
-                skins_available[skin['name']].append(chroma)
-                i += 1
+                if chroma['name'] == skin['name'] and not chroma['name'].upper() in skins_chroma_exception:
+                    skins_available[skin['name']].append(chroma)
+                    chroma['order_num'] = i
+                    i += 1
+                else:
+                    skins_available[chroma['name']] = [chroma]
+
         res = []
         champ_name = ''
         for name, skins in skins_available.items():

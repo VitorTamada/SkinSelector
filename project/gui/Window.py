@@ -22,6 +22,7 @@ def required_legal_statement():
                                            anchor=tk.CENTER)
     tk.Button(window, text="Ok", command=window.destroy).place(relx=0.5,
                                                                rely=0.75,
+                                                               relwidth=0.3,
                                                                anchor=tk.CENTER)
     window.mainloop()
 
@@ -37,16 +38,18 @@ def exit_confirmation(root):
     tk.Label(exit_confirmation_window, text="Do you wish to close the Skin Selector?").place(relx=0.5,
                                                                                              rely=0.35,
                                                                                              anchor=tk.CENTER)
-    tk.Button(exit_confirmation_window, text="Yes",
-              command=lambda: close_program(exit_confirmation_window, root)).place(relx=0.25,
-                                                                                   rely=0.75,
-                                                                                   relwidth=0.3,
-                                                                                   anchor=tk.CENTER)
-    tk.Button(exit_confirmation_window, text="No", command=exit_confirmation_window.destroy).place(relx=0.75,
-                                                                                                   rely=0.75,
-                                                                                                   relwidth=0.3,
-                                                                                                   anchor=tk.CENTER)
-
+    try:
+        tk.Button(exit_confirmation_window, text="Yes",
+                  command=lambda: close_program(exit_confirmation_window, root)).place(relx=0.25,
+                                                                                       rely=0.75,
+                                                                                       relwidth=0.3,
+                                                                                       anchor=tk.CENTER)
+        tk.Button(exit_confirmation_window, text="No", command=exit_confirmation_window.destroy).place(relx=0.75,
+                                                                                                       rely=0.75,
+                                                                                                       relwidth=0.3,
+                                                                                                       anchor=tk.CENTER)
+    except:
+        pass
     exit_confirmation_window.mainloop()
 
 
@@ -107,10 +110,14 @@ class GUI:
             # Loads skin splash art
             selected_skin = res['output'][0]
             champion = selected_skin[0].replace(" ", "").replace(".", "").replace("'", "")
+
+            # For some reasons, 'Fiddlesticks', with the middle 's' in lower case goes to pre VGU Fiddlesticks
+            # while FiddleSticks, with middle 's' in upper case goes to post VGU Fiddlesticks
+            if champion == 'Fiddlesticks':
+                champion = 'FiddleSticks'
             skin_id = selected_skin[2]
             try:
                 url = 'http://ddragon.leagueoflegends.com/cdn/img/champion/splash/' + champion + '_' + str(skin_id) + '.jpg'
-                print(url)
                 self._draw_chosen_skin_image(url, self._chosen_skin_image_new_size)
             except urllib.error.HTTPError:
                 champion = champion.lower().capitalize()
@@ -133,7 +140,7 @@ class GUI:
                     every_option[skin[1]] = 0
                 else:
                     every_option[skin[1]] += 1
-    
+
             list_skins_chromas = ""
             for skin, chromas in every_option.items():
                 if not chromas:
@@ -221,7 +228,8 @@ class GUI:
                                              relief=tk.FLAT,
                                              bg='light gray',
                                              yscrollcommand=scroll_bar.set,
-                                             font=("Helvetica", 13)
+                                             font=("Helvetica", 13),
+                                             wrap=tk.WORD
                                              )
         self._available_skins_list.place(relheight=self._rows_height[1],
                                          relwidth=self._columns_width[0]-scroll_bar_width,
