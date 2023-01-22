@@ -1,10 +1,23 @@
 # SkinSelector
 
-SkinSelector is a Python3 program to choose the skin for the player among the ones they have available.
+SkinSelector is a Python3 program, with Tkinter for the GUI, to choose the skin for the player among the ones they have available.
 
 If the player has several skins and does not want to choose which one to use, this simple application randomly selects one of them,
 chroma included. Furthermore, it lists every skin of the champion currently locked in the player owns and how many chromas for each skin,
 working as a reminder of their collection.
+
+## Libraries
+**numpy** 1.24.1
+
+**psutil** 5.9.4
+
+**requests** 2.28.1
+
+**certifi** 2022.12.07
+
+**PIL** 9.3.0
+
+**Tkinter** 8.6
 
 ## Using the program
 While having League of Legends open, run the program and click on Start to establish a connection with the client.
