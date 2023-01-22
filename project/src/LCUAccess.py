@@ -32,7 +32,7 @@ class LCUAccess:
             return True
         return False
 
-    def _try_request(self, operation, count=0):
+    def try_request(self, operation, count=0):
         if count > 5:
             return {'res': False, 'output': 'Method _try_request called over 5 times in a row.'}
 
@@ -56,15 +56,15 @@ class LCUAccess:
                 outfile.write(customca)
             print('That might have worked.')
 
-            return self._try_request(operation, count=count+1)
+            return self.try_request(operation, count=count+1)
         except requests.exceptions.ConnectionError as err:
             res = self.build_header()
             if res['res']:
-                return self._try_request(operation, count+1)
+                return self.try_request(operation, count+1)
             return {'res': False, 'output': err}
 
     def get_available_skins_and_chromas(self):
-        return self._try_request('/lol-champ-select/v1/skin-carousel-skins')
+        return self.try_request('/lol-champ-select/v1/skin-carousel-skins')
 
     def build_header(self):
         if not self._is_league_running():

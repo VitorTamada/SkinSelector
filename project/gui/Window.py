@@ -3,6 +3,8 @@ import urllib.error
 import numpy as np
 import tkinter as tk
 
+import random
+
 from SkinSelector.project.src.GetSkin import GetSkin
 from SkinSelector.project.src.LCUAccess import LCUAccess
 from SkinSelector.project.utils.utils import *
@@ -59,6 +61,9 @@ class GUI:
         self._height = 720
         self._borders_width_ratio = 0.03
 
+        self._font_name = "Cambria"
+        self._button_font_name = "Helvetica"
+
         self._lcu_access = LCUAccess()
 
         self._root = tk.Tk()
@@ -68,7 +73,8 @@ class GUI:
         self._opening_screen()
 
         self._rows_height = np.array([0.1, 0.7, 0.15, 0.05])
-        self._columns_width = np.array([0.25, 0.75])
+        self._columns_width = np.array([0.25, 0.55, 0.2])
+
         np.testing.assert_approx_equal(np.sum(self._rows_height), 1.0)
         np.testing.assert_approx_equal(np.sum(self._columns_width), 1.0)
 
@@ -80,8 +86,8 @@ class GUI:
             self._chosen_skin_image_new_size = tuple([int(self._canvas_size[0] * self._rows_height[1]),
                                                       int(self._canvas_size[1] * self._rows_height[1])])
         else:
-            self._chosen_skin_image_new_size = tuple([int(self._canvas_size[0] * self._columns_width[1]),
-                                                      int(self._canvas_size[1] * self._columns_width[1])])
+            self._chosen_skin_image_new_size = tuple([int(self._canvas_size[0] * float(np.sum(self._columns_width[1:]))),
+                                                      int(self._canvas_size[1] * float(np.sum(self._columns_width[1:])))])
 
         self._root.mainloop()
 
@@ -99,13 +105,44 @@ class GUI:
                                            bg='light gray')
         self._chosen_skin_image.image = chosen_skin
         self._chosen_skin_image.place(relheight=self._rows_height[1],
-                                      relwidth=self._columns_width[1],
+                                      relwidth=float(np.sum(self._columns_width[1:])),
                                       relx=self._columns_width[0],
                                       rely=self._rows_height[0])
+
+    def _draw_chroma_preview(self, chroma_preview_bytes):
+        param = (self._canvas_size[1] * float(np.sum(self._rows_height[2:])), self._canvas_size[0] * float(np.sum(self._columns_width[1:])))
+        param = min(param)
+
+        chroma_preview_size = (int(param), int(param))
+        if chroma_preview_bytes:
+            chroma_preview = resize_image_from_web(load_image_from_bytes(chroma_preview_bytes),
+                                                   new_size=chroma_preview_size)
+            self._chroma_preview = tk.Label(self._canvas,
+                                            image=chroma_preview,
+                                            bg='light grey')
+            self._chroma_preview.image = chroma_preview
+        else:
+            # cpp == chroma preview placeholder
+            cpp_url = 'http://ddragon.leagueoflegends.com/cdn/13.1.1/img/mission/TFT/Celebration/TFT_Capsule_Large.png'
+            chroma_preview_placeholder = resize_image_from_web(load_image_from_web(cpp_url)[1],
+                                                               new_size=chroma_preview_size)
+            self._chroma_preview = tk.Label(self._canvas,
+                                            image=chroma_preview_placeholder,
+                                            bg='light grey')
+            self._chroma_preview.image = chroma_preview_placeholder
+        self._chroma_preview.place(relx=1,
+                                   rely=0.8,
+                                   relheight=0.2,
+                                   relwidth=0.2,
+                                   anchor=tk.NE)
 
     def _choose_skin(self):
         res = self._get_skin.get_available_skins_and_chromas()
         if res['res']:
+            # Removes the chroma preview already drawn
+            self._chroma_preview.place_forget()
+            self._draw_chroma_preview(None)
+
             # Chosen skin. Loads image and name
             # Loads skin splash art
             selected_skin = res['output'][0]
@@ -128,10 +165,19 @@ class GUI:
             selected_skin_name = selected_skin[1].upper()
             if selected_skin_name == champion.upper():
                 selected_skin_name = "CLASSIC " + selected_skin_name
-            elif selected_skin[3]:
-                selected_skin_name += " - " + selected_skin[3]
+            elif selected_skin[3][0]:
+                selected_skin_name += " - " + selected_skin[3][0]
+                chroma_preview_path = self._lcu_access.try_request(selected_skin[3][1])
+                if chroma_preview_path['res']:
+                    chroma_preview_path = chroma_preview_path['output'].content
+                    self._draw_chroma_preview(chroma_preview_path)
+            #self._chosen_skin_name.config(state=tk.NORMAL)
+            #self._chosen_skin_name.delete('1.0', tk.END)
+            #self._chosen_skin_name.insert(tk.END, selected_skin_name)
+            #self._chosen_skin_name.config(state=tk.DISABLED)
+            #self._chosen_skin_name.tag_add('center', '1.0', 'end')
             self._chosen_skin_name.configure(text=selected_skin_name,
-                                             font=("Helvetica", 20))
+                                             font=(self._font_name, 20))
 
             # loads every other skin and respective number of chromas available
             every_option = {}
@@ -204,20 +250,21 @@ class GUI:
 
         self._canvas = tk.Canvas(self._root,
                                  width=self._canvas_size[0],
-                                 height=self._canvas_size[1])
+                                 height=self._canvas_size[1],
+                                 bg='light grey')
         self._canvas.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
         # Headers - Top row
         tk.Label(self._canvas,
                  text="AVAILABLE SKINS",
-                 font=("Helvetica", 15),
+                 font=(self._font_name, 17),
                  bg='light gray').place(relheight=self._rows_height[0],
                                         relwidth=self._columns_width[0])
         tk.Label(self._canvas,
                  text="CHOSEN SKIN",
-                 font=("Helvetica", 15),
+                 font=(self._font_name, 17),
                  bg='light gray').place(relheight=self._rows_height[0],
-                                        relwidth=self._columns_width[1],
+                                        relwidth=float(np.sum(self._columns_width[1:])),
                                         relx=self._columns_width[0])
 
         # Skins - Middle row
@@ -228,7 +275,7 @@ class GUI:
                                              relief=tk.FLAT,
                                              bg='light gray',
                                              yscrollcommand=scroll_bar.set,
-                                             font=("Helvetica", 13),
+                                             font=(self._font_name, 13),
                                              wrap=tk.WORD
                                              )
         self._available_skins_list.place(relheight=self._rows_height[1],
@@ -242,7 +289,7 @@ class GUI:
         self._available_skins_list.config(state=tk.DISABLED)
 
         # Draw placeholder while skin is not chosen
-        url = 'http://ddragon.leagueoflegends.com/cdn/13.1.1/img/mission/eog/rewards/leveling/features/Feature_FWoTD.png'
+        url = 'http://ddragon.leagueoflegends.com/cdn/13.1.1/img/mission/Feature_Loot.png'
         placeholder_size = (int(self._canvas_size[1] * self._rows_height[1]),
                             int(self._canvas_size[1] * self._rows_height[1]))
         self._draw_chosen_skin_image(url, placeholder_size)
@@ -251,7 +298,7 @@ class GUI:
         # Buttons
         tk.Button(self._canvas,
                   text="CHOOSE SKIN",
-                  font=("Helvetica", 15),
+                  font=(self._button_font_name, 15),
                   bg='green',
                   activebackground='dark green',
                   command=self._choose_skin).place(relheight=self._rows_height[2],
@@ -260,7 +307,7 @@ class GUI:
 
         tk.Button(self._canvas,
                   text="EXIT",
-                  font=("Helvetica", 15),
+                  font=(self._button_font_name, 15),
                   command=lambda: exit_confirmation(self._root),
                   bg='red',
                   activebackground='dark red').place(relheight=self._rows_height[3],
@@ -268,17 +315,21 @@ class GUI:
                                                      rely=float(np.sum(self._rows_height[:3])))
 
         # Chosen skin name
-        self._chosen_skin_name = tk.Label(self._canvas, bg='light gray')
+        self._chosen_skin_name = tk.Label(self._canvas,
+                                         bg='light gray')
         self._chosen_skin_name.place(relheight=float(np.sum(self._rows_height[2:])),
                                      relwidth=self._columns_width[1],
                                      relx=self._columns_width[0],
                                      rely=float(np.sum(self._rows_height[:2])))
 
+        # Draw chroma placeholder
+        self._draw_chroma_preview(None)
+
         # Required legal statement button
         rlgs_button_width = self._width*0.02
         tk.Button(self._root,
                   text="i",
-                  font=("Helvetica", 15),
+                  font=(self._font_name, 15),
                   command=required_legal_statement).place(width=int(rlgs_button_width),
                                                           height=int(rlgs_button_width),
                                                           x=self._width,

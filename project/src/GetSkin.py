@@ -20,7 +20,6 @@ class GetSkin:
         for skin in result['output'].json():
             if not skin['unlocked']:
                 continue
-
             skins_available[skin['name']] = [skin]
 
             i = 1
@@ -46,7 +45,7 @@ class GetSkin:
                 if 'order_num' in skin:
                     skin_id = int(str(skin['parentSkinId'])[-2:])
                     is_chroma_output = "Chroma {}".format(skin['order_num'])
-                res.append((champ_name, skin['name'], int(str(skin_id)[-2:]), is_chroma_output))
+                res.append((champ_name, skin['name'], int(str(skin_id)[-2:]), (is_chroma_output, skin['chromaPreviewPath'])))
 
         if res:
             res = (res[random.randrange(0, len(res))], res)

@@ -26,3 +26,7 @@ def resize_image_from_web(image, **kwargs):
         new_size = kwargs['new_size']
         resized_image = image.resize(new_size)
         return ImageTk.PhotoImage(resized_image)
+
+
+def load_image_from_bytes(byte_string):
+    return Image.open(io.BytesIO(byte_string))
