@@ -32,19 +32,25 @@ Next, it randomly chooses one of them, with all having the same probability.
 With the skin chosen, its splash art is downloaded from Data Dragon to be displayed.
 
 Finally, the splash art is displayed on the main area of the window.
-Below, it's the area for the name of the skin and the chroma selected if applicable.
+Below, it's the area for the name of the skin and the chroma selected if applicable as well as a preview of the chroma.
 On the left side, there is a list with every skin available and the number of chromas for the respective skin for that champion.
 
 Since the splash art is downloaded from Data Dragon after being chosen, the program itself is very light.
 However, it takes a couple seconds for the result to be rendered and depends on the user's internet speed.
 
-![Sample image](project/sample.png "Sample image")
+![Skin and chroma selected](project/sample.png "Skin and chroma selected")
+Skin and chroma selected.
+
+
+![Skin without chroma selected](project/sample3.png "Skin without chroma selected")
+Skin without chroma selected.
 
 ## Closing the program
 The program can be directly closed via the close button on the window.
 If the user use the EXIT button, a confirmation window appears before closing both windows.
 
 ![Closing program](project/sample2.png "Closing program")
+Closing the program.
 
 ## Endorsement
 
