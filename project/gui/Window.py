@@ -9,9 +9,6 @@ from SkinSelector.project.src.LCUAccess import LCUAccess
 from SkinSelector.project.utils.utils import *
 
 
-
-
-
 class GUI:
     def __init__(self):
         self._width = 1280
@@ -23,6 +20,7 @@ class GUI:
 
         self._lcu_access = LCUAccess()
 
+        # Main window
         self._root = tk.Tk()
         self._root.configure(bg='light gray')
         self._root.resizable(width=False, height=False)
@@ -54,29 +52,16 @@ class GUI:
         if messagebox.askokcancel("Close program", "Do you wish to close the Skin Selector?"):
             window.destroy()
 
-
     @staticmethod
     def required_legal_statement():
-        window = tk.Tk()
-        window.title("Legal statement")
-        window.geometry("{}x{}".format(450, 150))
-
-        statement = u"SkinSelector isn't endorsed by Riot Games and doesn't reflect the views or\n" \
-                    u"opinions of Riot Games or anyone officially involved in producing or\n" \
-                    u" managing Riot Games properties. Riot Games, and all associated properties are\n" \
-                    u"trademarks or registered trademarks of Riot Games, Inc."
-        tk.Label(window, text=statement).place(relx=0.5,
-                                               rely=0.35,
-                                               anchor=tk.CENTER)
-        tk.Button(window, text="Ok", command=window.destroy).place(relx=0.5,
-                                                                   rely=0.75,
-                                                                   relwidth=0.3,
-                                                                   anchor=tk.CENTER)
-        window.mainloop()
-
-    # for debugging
-    def _get_rest_request_header(self):
-        self._lcu_access.build_header()
+        title = "Legal statement"
+        statement = u"SkinSelector isn't endorsed by Riot Games and doesn't reflect\n" \
+                    u"the views or opinions of Riot Games or anyone officially\n" \
+                    u"involved in producing or managing Riot Games properties.\n" \
+                    u"Riot Games, and all associated properties are trademarks or\n" \
+                    u"registered trademarks of Riot Games, Inc."
+        messagebox.showinfo(title=title,
+                            message=statement)
 
     def _draw_chosen_skin_image(self, url, new_size):
         chosen_skin = load_image_from_web(url)
@@ -93,7 +78,8 @@ class GUI:
                                       rely=self._rows_height[0])
 
     def _draw_chroma_preview(self, chroma_preview_bytes):
-        param = (self._canvas_size[1] * float(np.sum(self._rows_height[2:])), self._canvas_size[0] * float(np.sum(self._columns_width[1:])))
+        param = (self._canvas_size[1] * float(np.sum(self._rows_height[2:])),
+                 self._canvas_size[0] * float(np.sum(self._columns_width[1:])))
         param = min(param)
 
         chroma_preview_size = (int(param), int(param))
@@ -114,14 +100,16 @@ class GUI:
                                             bg='light grey')
             self._chroma_preview.image = chroma_preview_placeholder
         self._chroma_preview.place(relx=1,
-                                   rely=0.8,
-                                   relheight=0.2,
-                                   relwidth=0.2,
+                                   rely=float(np.sum(self._rows_height[:2])),
+                                   relheight=float(np.sum(self._rows_height[2:])),
+                                   relwidth=float(np.sum(self._columns_width[-1])),
                                    anchor=tk.NE)
 
     def _choose_skin(self):
         res = self._get_skin.get_available_skins_and_chromas()
-        if res['res']:
+        if not res['res']:
+            messagebox.showerror("Error", "Game not in champion select or champion not locked in.")
+        else:
             # Removes the chroma preview already drawn
             self._chroma_preview.place_forget()
             self._draw_chroma_preview(None)
@@ -157,7 +145,7 @@ class GUI:
             self._chosen_skin_name.configure(text=selected_skin_name,
                                              font=(self._font_name, 20))
 
-            # loads every other skin and respective number of chromas available
+            # Lists every skin and respective number of chromas available
             every_option = {}
             for skin in res['output'][1]:
                 if skin[1] not in every_option:
