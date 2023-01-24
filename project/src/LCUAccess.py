@@ -43,10 +43,12 @@ class LCUAccess:
 
         if not isinstance(operation, str):
             return {'res': False, 'output': 'operation argument is not a string.'}
+
         try:
             command = self._lcu_api + operation
             result = requests.get(command, headers=self._header)
             return {'res': True, 'output': result}
+
         except requests.exceptions.SSLError:
             print('SSL Error. Adding custom certs to Certifi store...')
             cafile = certifi.where()
@@ -55,8 +57,8 @@ class LCUAccess:
             with open(cafile, 'ab') as outfile:
                 outfile.write(customca)
             print('That might have worked.')
-
             return self.try_request(operation, count=count+1)
+
         except requests.exceptions.ConnectionError as err:
             res = self.build_header()
             if res['res']:

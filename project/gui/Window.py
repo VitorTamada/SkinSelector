@@ -3,56 +3,13 @@ import urllib.error
 import numpy as np
 import tkinter as tk
 
-import random
-
+from tkinter import messagebox
 from SkinSelector.project.src.GetSkin import GetSkin
 from SkinSelector.project.src.LCUAccess import LCUAccess
 from SkinSelector.project.utils.utils import *
 
 
-def required_legal_statement():
-    window = tk.Tk()
-    window.title("Legal statement")
-    window.geometry("{}x{}".format(450, 150))
 
-    statement = u"SkinSelector isn't endorsed by Riot Games and doesn't reflect the views or\n" \
-                u"opinions of Riot Games or anyone officially involved in producing or\n" \
-                u" managing Riot Games properties. Riot Games, and all associated properties are\n" \
-                u"trademarks or registered trademarks of Riot Games, Inc."
-    tk.Label(window, text=statement).place(relx=0.5,
-                                           rely=0.35,
-                                           anchor=tk.CENTER)
-    tk.Button(window, text="Ok", command=window.destroy).place(relx=0.5,
-                                                               rely=0.75,
-                                                               relwidth=0.3,
-                                                               anchor=tk.CENTER)
-    window.mainloop()
-
-
-def exit_confirmation(root):
-    def close_program(confirmation_window, root_window):
-        confirmation_window.destroy()
-        root_window.destroy()
-
-    exit_confirmation_window = tk.Tk()
-    exit_confirmation_window.title("Confirmation")
-    exit_confirmation_window.geometry("{}x{}".format(250, 100))
-    tk.Label(exit_confirmation_window, text="Do you wish to close the Skin Selector?").place(relx=0.5,
-                                                                                             rely=0.35,
-                                                                                             anchor=tk.CENTER)
-    try:
-        tk.Button(exit_confirmation_window, text="Yes",
-                  command=lambda: close_program(exit_confirmation_window, root)).place(relx=0.25,
-                                                                                       rely=0.75,
-                                                                                       relwidth=0.3,
-                                                                                       anchor=tk.CENTER)
-        tk.Button(exit_confirmation_window, text="No", command=exit_confirmation_window.destroy).place(relx=0.75,
-                                                                                                       rely=0.75,
-                                                                                                       relwidth=0.3,
-                                                                                                       anchor=tk.CENTER)
-    except:
-        pass
-    exit_confirmation_window.mainloop()
 
 
 class GUI:
@@ -69,6 +26,7 @@ class GUI:
         self._root = tk.Tk()
         self._root.configure(bg='light gray')
         self._root.resizable(width=False, height=False)
+        self._root.protocol("WM_DELETE_WINDOW", lambda: self.on_closing(self._root))
 
         self._opening_screen()
 
@@ -90,6 +48,31 @@ class GUI:
                                                       int(self._canvas_size[1] * float(np.sum(self._columns_width[1:])))])
 
         self._root.mainloop()
+
+    @staticmethod
+    def on_closing(window):
+        if messagebox.askokcancel("Close program", "Do you wish to close the Skin Selector?"):
+            window.destroy()
+
+
+    @staticmethod
+    def required_legal_statement():
+        window = tk.Tk()
+        window.title("Legal statement")
+        window.geometry("{}x{}".format(450, 150))
+
+        statement = u"SkinSelector isn't endorsed by Riot Games and doesn't reflect the views or\n" \
+                    u"opinions of Riot Games or anyone officially involved in producing or\n" \
+                    u" managing Riot Games properties. Riot Games, and all associated properties are\n" \
+                    u"trademarks or registered trademarks of Riot Games, Inc."
+        tk.Label(window, text=statement).place(relx=0.5,
+                                               rely=0.35,
+                                               anchor=tk.CENTER)
+        tk.Button(window, text="Ok", command=window.destroy).place(relx=0.5,
+                                                                   rely=0.75,
+                                                                   relwidth=0.3,
+                                                                   anchor=tk.CENTER)
+        window.mainloop()
 
     # for debugging
     def _get_rest_request_header(self):
@@ -171,11 +154,6 @@ class GUI:
                 if chroma_preview_path['res']:
                     chroma_preview_path = chroma_preview_path['output'].content
                     self._draw_chroma_preview(chroma_preview_path)
-            #self._chosen_skin_name.config(state=tk.NORMAL)
-            #self._chosen_skin_name.delete('1.0', tk.END)
-            #self._chosen_skin_name.insert(tk.END, selected_skin_name)
-            #self._chosen_skin_name.config(state=tk.DISABLED)
-            #self._chosen_skin_name.tag_add('center', '1.0', 'end')
             self._chosen_skin_name.configure(text=selected_skin_name,
                                              font=(self._font_name, 20))
 
@@ -221,14 +199,15 @@ class GUI:
         os_width = 200
         os_height = 200
 
+        # Draws background image for the opening window
         background_image_url = 'http://ddragon.leagueoflegends.com/cdn/13.1.1/img/mission/newPlayerExperience/Pupil_Becomes_The_Master.png'
         background_image = load_image_from_web(background_image_url)
         background_image = resize_image_from_web(background_image[1], new_size=(200, 200))
-
         background = tk.Label(self._root, image=background_image)
         background.image = background_image
         background.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
+        # Draws button widgets
         tk.Button(self._root,
                   text="Start",
                   command=is_lol_running).place(relx=0.5,
@@ -237,10 +216,10 @@ class GUI:
                                                 anchor=tk.CENTER)
         tk.Button(self._root,
                   text="Exit",
-                  command=lambda: exit_confirmation(self._root)).place(relx=0.5,
-                                                                       rely=0.9,
-                                                                       relwidth=0.3,
-                                                                       anchor=tk.CENTER)
+                  command=lambda: self.on_closing(self._root)).place(relx=0.5,
+                                                                     rely=0.9,
+                                                                     relwidth=0.3,
+                                                                     anchor=tk.CENTER)
 
         self._root.geometry("{}x{}".format(os_width, os_height))
 
@@ -308,7 +287,7 @@ class GUI:
         tk.Button(self._canvas,
                   text="EXIT",
                   font=(self._button_font_name, 15),
-                  command=lambda: exit_confirmation(self._root),
+                  command=lambda: self.on_closing(self._root),
                   bg='red',
                   activebackground='dark red').place(relheight=self._rows_height[3],
                                                      relwidth=self._columns_width[0],
@@ -316,7 +295,7 @@ class GUI:
 
         # Chosen skin name
         self._chosen_skin_name = tk.Label(self._canvas,
-                                         bg='light gray')
+                                          bg='light gray')
         self._chosen_skin_name.place(relheight=float(np.sum(self._rows_height[2:])),
                                      relwidth=self._columns_width[1],
                                      relx=self._columns_width[0],
@@ -330,7 +309,7 @@ class GUI:
         tk.Button(self._root,
                   text="i",
                   font=(self._font_name, 15),
-                  command=required_legal_statement).place(width=int(rlgs_button_width),
-                                                          height=int(rlgs_button_width),
-                                                          x=self._width,
-                                                          anchor=tk.NE)
+                  command=self.required_legal_statement).place(width=int(rlgs_button_width),
+                                                               height=int(rlgs_button_width),
+                                                               x=self._width,
+                                                               anchor=tk.NE)

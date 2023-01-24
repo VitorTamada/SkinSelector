@@ -11,16 +11,14 @@ class GetSkin:
     def __init__(self, lcu_access):
         self._lcu_access = lcu_access
 
-    def get_available_skins_and_chromas(self):
-        result = self._lcu_access.get_available_skins_and_chromas()
-        if not result['res']:
-            return result
-
-        skins_available = {}
-        for skin in result['output'].json():
+    @staticmethod
+    def _get_unlocked_skins(request_result):
+        unlocked_skins = {}
+        for skin in request_result['output'].json():
             if not skin['unlocked']:
                 continue
-            skins_available[skin['name']] = [skin]
+
+            unlocked_skins[skin['name']] = [skin]
 
             i = 1
             for chroma in skin['childSkins']:
@@ -28,28 +26,46 @@ class GetSkin:
                     continue
 
                 if chroma['name'] == skin['name'] and not chroma['name'].upper() in skins_chroma_exception:
-                    skins_available[skin['name']].append(chroma)
+                    unlocked_skins[skin['name']].append(chroma)
                     chroma['order_num'] = i
                     i += 1
                 else:
-                    skins_available[chroma['name']] = [chroma]
+                    unlocked_skins[chroma['name']] = [chroma]
 
-        res = []
+        return unlocked_skins
+
+    @staticmethod
+    def _filter_unlocked_skins(unlocked_skins):
+        filtered_unlocked_skins = []
         champ_name = ''
-        for name, skins in skins_available.items():
+        for name, skins in unlocked_skins.items():
             if not champ_name:
                 champ_name = skins[0]['name']
+
             for skin in skins:
                 skin_id = skin['id']
                 is_chroma_output = ''
                 if 'order_num' in skin:
                     skin_id = int(str(skin['parentSkinId'])[-2:])
                     is_chroma_output = "Chroma {}".format(skin['order_num'])
-                res.append((champ_name, skin['name'], int(str(skin_id)[-2:]), (is_chroma_output, skin['chromaPreviewPath'])))
+                filtered_unlocked_skins.append((champ_name,
+                                                skin['name'],
+                                                int(str(skin_id)[-2:]),
+                                                (is_chroma_output, skin['chromaPreviewPath'])))
 
-        if res:
-            res = (res[random.randrange(0, len(res))], res)
-            res = {'res': True, 'output': res}
+        return filtered_unlocked_skins
+
+    def get_available_skins_and_chromas(self):
+        request_result = self._lcu_access.get_available_skins_and_chromas()
+        if not request_result['res']:
+            return request_result
+
+        unlocked_skins = self._get_unlocked_skins(request_result)
+        filtered_unlocked_skins = self._filter_unlocked_skins(unlocked_skins)
+
+        if filtered_unlocked_skins:
+            filtered_unlocked_skins = (filtered_unlocked_skins[random.randrange(0, len(filtered_unlocked_skins))], filtered_unlocked_skins)
+            filtered_unlocked_skins = {'res': True, 'output': filtered_unlocked_skins}
         else:
-            res = {'res': False, 'output': None}
-        return res
+            filtered_unlocked_skins = {'res': False, 'output': None}
+        return filtered_unlocked_skins
