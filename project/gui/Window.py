@@ -20,6 +20,11 @@ class GUI:
 
         self._lcu_access = LCUAccess()
 
+        self._splash_art_style = 'splash'
+
+        self._skin_already_chosen = False
+        self._chosen_skin_image = None
+
         # Main window
         self._root = tk.Tk()
         self._root.configure(bg='light gray')
@@ -63,8 +68,24 @@ class GUI:
         messagebox.showinfo(title=title,
                             message=statement)
 
-    def _draw_chosen_skin_image(self, url, new_size):
-        chosen_skin = load_image_from_web(url)
+    def _change_splash_art_style(self):
+        if self._splash_art_style == 'splash':
+            self._splash_art_style_button.config(text='Centered splash art'.upper())
+            self._splash_art_style = 'centered'
+            if self._skin_already_chosen:
+                self._url = self._url.replace('splash', 'centered')
+                self._draw_chosen_skin_image(self._chosen_skin_image_new_size)
+        elif self._splash_art_style == 'centered':
+            self._splash_art_style_button.config(text='Full splash art'.upper())
+            self._splash_art_style = 'splash'
+            if self._skin_already_chosen:
+                self._url = self._url.replace('centered', 'splash')
+                self._draw_chosen_skin_image(self._chosen_skin_image_new_size)
+
+    def _draw_chosen_skin_image(self, new_size):
+        if self._chosen_skin_image:
+            self._chosen_skin_image.place_forget()
+        chosen_skin = load_image_from_web(self._url)
 
         chosen_skin = resize_image_from_web(chosen_skin[1],
                                             new_size=new_size)
@@ -110,6 +131,7 @@ class GUI:
         if not res['res']:
             messagebox.showerror("Error", "Game not in champion select or champion not locked in.")
         else:
+            self._skin_already_chosen = True
             # Removes the chroma preview already drawn
             self._chroma_preview.place_forget()
             self._draw_chroma_preview(None)
@@ -120,17 +142,20 @@ class GUI:
             champion = selected_skin[0].replace(" ", "").replace(".", "").replace("'", "")
 
             # For some reasons, 'Fiddlesticks', with the middle 's' in lower case goes to pre VGU Fiddlesticks
-            # while FiddleSticks, with middle 's' in upper case goes to post VGU Fiddlesticks
+            # while FiddleSticks, with middle 's' in upper case goes to post VGU Fiddlesticks.
             if champion == 'Fiddlesticks':
                 champion = 'FiddleSticks'
+            # And Wukong is called MonkeyKing internally.
+            elif champion == 'Wukong':
+                champion = 'MonkeyKing'
             skin_id = selected_skin[2]
             try:
-                url = 'http://ddragon.leagueoflegends.com/cdn/img/champion/splash/' + champion + '_' + str(skin_id) + '.jpg'
-                self._draw_chosen_skin_image(url, self._chosen_skin_image_new_size)
+                self._url = 'http://ddragon.leagueoflegends.com/cdn/img/champion/' + self._splash_art_style + '/' + champion + '_' + str(skin_id) + '.jpg'
+                self._draw_chosen_skin_image(self._chosen_skin_image_new_size)
             except urllib.error.HTTPError:
                 champion = champion.lower().capitalize()
-                url = 'http://ddragon.leagueoflegends.com/cdn/img/champion/splash/' + champion + '_' + str(skin_id) + '.jpg'
-                self._draw_chosen_skin_image(url, self._chosen_skin_image_new_size)
+                self._url = 'http://ddragon.leagueoflegends.com/cdn/img/champion/' + self._splash_art_style + '/' + champion + '_' + str(skin_id) + '.jpg'
+                self._draw_chosen_skin_image(self._chosen_skin_image_new_size)
 
             # Writes skin name and chroma if applicable
             selected_skin_name = selected_skin[1].upper()
@@ -227,12 +252,23 @@ class GUI:
                  font=(self._font_name, 17),
                  bg='light gray').place(relheight=self._rows_height[0],
                                         relwidth=self._columns_width[0])
+
         tk.Label(self._canvas,
-                 text="CHOSEN SKIN",
-                 font=(self._font_name, 17),
                  bg='light gray').place(relheight=self._rows_height[0],
                                         relwidth=float(np.sum(self._columns_width[1:])),
                                         relx=self._columns_width[0])
+
+        self._splash_art_style_button = tk.Button(self._canvas,
+                                                  text="Full splash art".upper(),
+                                                  font=(self._font_name, 17),
+                                                  command=self._change_splash_art_style,
+                                                  bg='light grey')
+
+        self._splash_art_style_button.place(relheight=self._rows_height[0],
+                                            relwidth=float(np.sum(self._columns_width[1:]))/2,
+                                            relx=(self._columns_width[0] + float(np.sum(self._columns_width[1:]))/2),
+                                            rely=self._rows_height[0],
+                                            anchor=tk.S)
 
         # Skins - Middle row
         # List of available skins for that champion
@@ -256,10 +292,10 @@ class GUI:
         self._available_skins_list.config(state=tk.DISABLED)
 
         # Draw placeholder while skin is not chosen
-        url = 'http://ddragon.leagueoflegends.com/cdn/13.1.1/img/mission/Feature_Loot.png'
+        self._url = 'http://ddragon.leagueoflegends.com/cdn/13.1.1/img/mission/Feature_Loot.png'
         placeholder_size = (int(self._canvas_size[1] * self._rows_height[1]),
                             int(self._canvas_size[1] * self._rows_height[1]))
-        self._draw_chosen_skin_image(url, placeholder_size)
+        self._draw_chosen_skin_image(placeholder_size)
 
         # Buttons and skin name - Bottom row
         # Buttons
@@ -293,7 +329,7 @@ class GUI:
         self._draw_chroma_preview(None)
 
         # Required legal statement button
-        rlgs_button_width = self._width*0.02
+        rlgs_button_width = self._width*0.015
         tk.Button(self._root,
                   text="i",
                   font=(self._font_name, 15),
