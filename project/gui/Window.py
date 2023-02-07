@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import messagebox
 from SkinSelector.project.src.GetSkin import GetSkin
 from SkinSelector.project.src.LCUAccess import LCUAccess
-from SkinSelector.project.utils.utils import *
+from SkinSelector.project.src.ImageManager import ImageManager
 
 
 class GUI:
@@ -24,6 +24,8 @@ class GUI:
 
         self._skin_already_chosen = False
         self._chosen_skin_image = None
+
+        self._image_manager = ImageManager()
 
         # Main window
         self._root = tk.Tk()
@@ -73,22 +75,23 @@ class GUI:
             self._splash_art_style_button.config(text='Centered splash art'.upper())
             self._splash_art_style = 'centered'
             if self._skin_already_chosen:
-                self._url = self._url.replace('splash', 'centered')
+                self._main_image_path = self._main_image_path.replace('splash', 'centered')
                 self._draw_chosen_skin_image(self._chosen_skin_image_new_size)
         elif self._splash_art_style == 'centered':
             self._splash_art_style_button.config(text='Full splash art'.upper())
             self._splash_art_style = 'splash'
             if self._skin_already_chosen:
-                self._url = self._url.replace('centered', 'splash')
+                self._main_image_path = self._main_image_path.replace('centered', 'splash')
                 self._draw_chosen_skin_image(self._chosen_skin_image_new_size)
 
     def _draw_chosen_skin_image(self, new_size):
         if self._chosen_skin_image:
             self._chosen_skin_image.place_forget()
-        chosen_skin = load_image_from_web(self._url)
 
-        chosen_skin = resize_image_from_web(chosen_skin[1],
-                                            new_size=new_size)
+        chosen_skin = self._image_manager.load_image(self._main_image_path)
+
+        chosen_skin = self._image_manager.resize_image(chosen_skin[1],
+                                                       new_size=new_size)
         self._chosen_skin_image = tk.Label(self._canvas,
                                            image=chosen_skin,
                                            bg='light gray')
@@ -98,24 +101,24 @@ class GUI:
                                       relx=self._columns_width[0],
                                       rely=self._rows_height[0])
 
-    def _draw_chroma_preview(self, chroma_preview_bytes):
+    def _draw_chroma_preview(self, chroma_preview_image):
         param = (self._canvas_size[1] * float(np.sum(self._rows_height[2:])),
                  self._canvas_size[0] * float(np.sum(self._columns_width[1:])))
         param = min(param)
 
         chroma_preview_size = (int(param), int(param))
-        if chroma_preview_bytes:
-            chroma_preview = resize_image_from_web(load_image_from_bytes(chroma_preview_bytes),
-                                                   new_size=chroma_preview_size)
+        if chroma_preview_image:
+            chroma_preview = self._image_manager.resize_image(chroma_preview_image,
+                                                              new_size=chroma_preview_size)
             self._chroma_preview = tk.Label(self._canvas,
                                             image=chroma_preview,
                                             bg='light grey')
             self._chroma_preview.image = chroma_preview
         else:
             # cpp == chroma preview placeholder
-            cpp_url = 'http://ddragon.leagueoflegends.com/cdn/13.1.1/img/mission/TFT/Celebration/TFT_Capsule_Large.png'
-            chroma_preview_placeholder = resize_image_from_web(load_image_from_web(cpp_url)[1],
-                                                               new_size=chroma_preview_size)
+            cpp_path = 'http://ddragon.leagueoflegends.com/cdn/13.1.1/img/mission/TFT/Celebration/TFT_Capsule_Large.png'
+            chroma_preview_placeholder = self._image_manager.resize_image(self._image_manager.load_image(cpp_path)[1],
+                                                                          new_size=chroma_preview_size)
             self._chroma_preview = tk.Label(self._canvas,
                                             image=chroma_preview_placeholder,
                                             bg='light grey')
@@ -150,11 +153,11 @@ class GUI:
                 champion = 'MonkeyKing'
             skin_id = selected_skin[2]
             try:
-                self._url = 'http://ddragon.leagueoflegends.com/cdn/img/champion/' + self._splash_art_style + '/' + champion + '_' + str(skin_id) + '.jpg'
+                self._main_image_path = 'http://ddragon.leagueoflegends.com/cdn/img/champion/' + self._splash_art_style + '/' + champion + '_' + str(skin_id) + '.jpg'
                 self._draw_chosen_skin_image(self._chosen_skin_image_new_size)
             except urllib.error.HTTPError:
                 champion = champion.lower().capitalize()
-                self._url = 'http://ddragon.leagueoflegends.com/cdn/img/champion/' + self._splash_art_style + '/' + champion + '_' + str(skin_id) + '.jpg'
+                self._main_image_path = 'http://ddragon.leagueoflegends.com/cdn/img/champion/' + self._splash_art_style + '/' + champion + '_' + str(skin_id) + '.jpg'
                 self._draw_chosen_skin_image(self._chosen_skin_image_new_size)
 
             # Writes skin name and chroma if applicable
@@ -165,8 +168,10 @@ class GUI:
                 selected_skin_name += " - " + selected_skin[3][0]
                 chroma_preview_path = self._lcu_access.try_request(selected_skin[3][1])
                 if chroma_preview_path['res']:
-                    chroma_preview_path = chroma_preview_path['output'].content
-                    self._draw_chroma_preview(chroma_preview_path)
+                    chroma_id = selected_skin[3][1].split("/")[-1]
+                    chroma_path = "champion\\chromas\\" + selected_skin[0] + "_" + str(selected_skin[2]) + "_" + chroma_id
+                    chroma_preview = self._image_manager.load_image(chroma_path, chroma_preview_path['output'].content)[1]
+                    self._draw_chroma_preview(chroma_preview)
             self._chosen_skin_name.configure(text=selected_skin_name,
                                              font=(self._font_name, 20))
 
@@ -214,8 +219,8 @@ class GUI:
 
         # Draws background image for the opening window
         background_image_url = 'http://ddragon.leagueoflegends.com/cdn/13.1.1/img/mission/newPlayerExperience/Pupil_Becomes_The_Master.png'
-        background_image = load_image_from_web(background_image_url)
-        background_image = resize_image_from_web(background_image[1], new_size=(200, 200))
+        background_image = self._image_manager.load_image(background_image_url)
+        background_image = self._image_manager.resize_image(background_image[1], new_size=(200, 200))
         background = tk.Label(self._root, image=background_image)
         background.image = background_image
         background.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
@@ -292,7 +297,7 @@ class GUI:
         self._available_skins_list.config(state=tk.DISABLED)
 
         # Draw placeholder while skin is not chosen
-        self._url = 'http://ddragon.leagueoflegends.com/cdn/13.1.1/img/mission/Feature_Loot.png'
+        self._main_image_path = 'http://ddragon.leagueoflegends.com/cdn/13.1.1/img/mission/Feature_Loot.png'
         placeholder_size = (int(self._canvas_size[1] * self._rows_height[1]),
                             int(self._canvas_size[1] * self._rows_height[1]))
         self._draw_chosen_skin_image(placeholder_size)
