@@ -4,9 +4,10 @@ import numpy as np
 import tkinter as tk
 
 from tkinter import messagebox
+from tktooltip import ToolTip
 from SkinSelector.project.src.GetSkin import GetSkin
 from SkinSelector.project.src.LCUAccess import LCUAccess
-from SkinSelector.project.src.ImageManager import ImageManager
+from SkinSelector.project.src.ImageManager import ImageManager, NOT_SAVE, SAVE
 
 
 class GUI:
@@ -17,6 +18,8 @@ class GUI:
 
         self._font_name = "Cambria"
         self._button_font_name = "Helvetica"
+
+        self._tooltip_delay = 0.3
 
         self._lcu_access = LCUAccess()
 
@@ -128,6 +131,7 @@ class GUI:
                                    relheight=float(np.sum(self._rows_height[2:])),
                                    relwidth=float(np.sum(self._columns_width[-1])),
                                    anchor=tk.NE)
+        ToolTip(self._chroma_preview, msg="Shows chroma preview if one is chosen.", delay=self._tooltip_delay)
 
     def _choose_skin(self):
         res = self._get_skin.get_available_skins_and_chromas()
@@ -241,6 +245,24 @@ class GUI:
 
         self._root.geometry("{}x{}".format(os_width, os_height))
 
+    def _switch_image_manager_mode(self):
+        tooltip_msg = "Saving splash arts and chroma previews into disk makes the loading faster\n"
+        tooltip_msg += "and removes the necessity to download them everytime."
+        if self._image_manager.current_mode == SAVE:
+            self._image_manager_mode_button.config(text=NOT_SAVE)
+            tooltip_msg += "\n\nNO SAVE: Splash arts and chroma previews are not saved into disk."
+        elif self._image_manager.current_mode == NOT_SAVE:
+            self._image_manager_mode_button.config(text=SAVE)
+            tooltip_msg += "\n\nSAVE: Splash arts and chromas previews are saved into disk."
+        self._image_manager.switch_mode()
+        self._image_manager_mode_button.place(width=int(self._misc_button_side_length) * 5,
+                                              height=int(self._misc_button_side_length),
+                                              x=self._width-int(self._misc_button_side_length),
+                                              anchor=tk.NE)
+        ToolTip(self._image_manager_mode_button,
+                msg=tooltip_msg,
+                delay=self._tooltip_delay)
+
     def _main_screen(self):
         self._root.geometry("{}x{}".format(self._width, self._height))
         self._get_skin = GetSkin(self._lcu_access)
@@ -252,11 +274,15 @@ class GUI:
         self._canvas.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
         # Headers - Top row
-        tk.Label(self._canvas,
-                 text="AVAILABLE SKINS",
-                 font=(self._font_name, 17),
-                 bg='light gray').place(relheight=self._rows_height[0],
-                                        relwidth=self._columns_width[0])
+        list_available_skins = tk.Label(self._canvas,
+                                        text="AVAILABLE SKINS",
+                                        font=(self._font_name, 17),
+                                        bg='light gray')
+        list_available_skins.place(relheight=self._rows_height[0],
+                                   relwidth=self._columns_width[0])
+        ToolTip(list_available_skins,
+                msg="List of every available skins and\nnumber of available chromas for each one.",
+                delay=self._tooltip_delay)
 
         tk.Label(self._canvas,
                  bg='light gray').place(relheight=self._rows_height[0],
@@ -274,6 +300,10 @@ class GUI:
                                             relx=(self._columns_width[0] + float(np.sum(self._columns_width[1:]))/2),
                                             rely=self._rows_height[0],
                                             anchor=tk.S)
+
+        ToolTip(self._splash_art_style_button,
+                msg="Shows full or centered splash art.",
+                delay=self._tooltip_delay)
 
         # Skins - Middle row
         # List of available skins for that champion
@@ -333,12 +363,37 @@ class GUI:
         # Draw chroma placeholder
         self._draw_chroma_preview(None)
 
+        # Save images or not
+        self._misc_button_side_length = self._width * 0.0175
+        self._image_manager_mode_button = tk.Button(self._root,
+                                                    text=self._image_manager.current_mode,
+                                                    font=(self._font_name, 14),
+                                                    command=self._switch_image_manager_mode
+                                                    )
+        self._image_manager_mode_button.place(width=int(self._misc_button_side_length) * 5,
+                                              height=int(self._misc_button_side_length),
+                                              x=self._width-int(self._misc_button_side_length),
+                                              anchor=tk.NE)
+        tooltip_msg = "Saving splash arts and chroma previews into disk makes the loading faster\n"
+        tooltip_msg += "and removes the necessity to download them everytime."
+        if self._image_manager.current_mode == SAVE:
+            tooltip_msg += "\n\nSAVE: Splash arts and chromas previews are saved into disk."
+        elif self._image_manager.current_mode == NOT_SAVE:
+            tooltip_msg += "\n\nNO SAVE: Splash arts and chroma previews are not saved into disk."
+        ToolTip(self._image_manager_mode_button,
+                msg=tooltip_msg,
+                delay=self._tooltip_delay)
+
+
         # Required legal statement button
-        rlgs_button_width = self._width*0.015
-        tk.Button(self._root,
-                  text="i",
-                  font=(self._font_name, 15),
-                  command=self.required_legal_statement).place(width=int(rlgs_button_width),
-                                                               height=int(rlgs_button_width),
-                                                               x=self._width,
-                                                               anchor=tk.NE)
+        rlgs_button = tk.Button(self._root,
+                                text="i",
+                                font=(self._font_name, 14),
+                                command=self.required_legal_statement)
+        rlgs_button.place(width=int(self._misc_button_side_length),
+                          height=int(self._misc_button_side_length),
+                          x=self._width,
+                          anchor=tk.NE)
+        ToolTip(rlgs_button,
+                msg="Legal requirement statement",
+                delay=self._tooltip_delay)

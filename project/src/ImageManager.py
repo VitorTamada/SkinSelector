@@ -5,7 +5,7 @@ import PIL.PngImagePlugin
 from PIL import Image, ImageTk
 from urllib.request import urlopen
 
-NOT_SAVE = 'NOT SAVE'
+NOT_SAVE = 'NO SAVE'
 SAVE = 'SAVE'
 
 
@@ -83,10 +83,11 @@ class ImageManager:
             else:
                 chroma = self._load_image_from_bytes(is_chroma)
                 pil_chroma = ImageTk.PhotoImage(chroma)
-                chroma.save(image_path)
+                if self.__mode == SAVE:
+                    chroma.save(image_path)
                 return pil_chroma, chroma
         else:
-            if (path.startswith("https://") or path.startswith("http://")) and not os.path.exists(self._get_directory_to_save(path)):
+            if not os.path.exists(self._get_directory_to_save(path)):
                 return self._load_image_from_web(path)
             else:
                 image_path = self._get_directory_to_save(path)
